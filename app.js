@@ -30,7 +30,7 @@ mongoose.connect("mongodb://127.0.0.1:27017/userDB", {
 });
 
 const userSchema = new mongoose.Schema({
-    email: String,
+    username: String,
     password: String,
     googleId: String // Add this line to store Google's unique ID
 });
@@ -63,7 +63,8 @@ passport.use(new GoogleStrategy({
     callbackURL: "http://localhost:3000/auth/google/secrets",
     userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo"
 }, (accessToken, refreshToken, profile, cb) => {
-    User.findOrCreate({ googleId: profile.id }, (err, user) => {
+    console.log(profile);
+    User.findOrCreate({ googleId: profile.id, username: profile.displayName }, (err, user) => {
         return cb(err, user);
     });
 }));
