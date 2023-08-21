@@ -32,7 +32,8 @@ mongoose.connect("mongodb://127.0.0.1:27017/userDB", {
 const userSchema = new mongoose.Schema({
     username: String,
     password: String,
-    googleId: String // Add this line to store Google's unique ID
+    googleId: String, // Add this line to store Google's unique ID
+    secret: String
 });
 
 userSchema.plugin(passportLocalMongoose);
@@ -91,13 +92,37 @@ app.get("/register", (req, res) => {
     res.render("register.ejs");
 });
 
-app.get("/secrets", (req, res) => {
+app.get("/secrets", async (req, res) => {
+    try {
+        const allUsersWithSecrets = await User.find({ secret: { $ne: null }});
+        res.render("secrets.ejs", {
+            allUsersWithSecrets: allUsersWithSecrets
+        });
+    } catch (error) {
+        res.status(500).send(error);
+    }
+});
+
+app.get("/submit", (req, res) => {
     if (req.isAuthenticated()) {
-        res.render("secrets.ejs");
+        res.render("submit.ejs");
     } else {
         res.redirect("/login");
     }
 });
+
+app.post("/submit", async(req, res) => {
+    try {
+        const submittedSecret = req.body.secret;
+        console.log(req.user.id);
+        const foundUser = await User.findById(req.user.id);
+        foundUser.secret = submittedSecret;
+        await foundUser.save();
+        res.redirect("/secrets");
+    } catch (error) {
+        res.status(500).send(error);
+    }   
+})
 
 app.get("/logout", (req, res) => {
     req.logout(() => {
